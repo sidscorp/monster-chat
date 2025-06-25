@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+.env
+api_keys.env
+.DS_Store
+chat_env/
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
