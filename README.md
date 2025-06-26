@@ -1,6 +1,12 @@
-# 🤖 OpenRouter Chat UI
+# 🤖 Monster Chat
 
-A sleek, modern web interface for chatting with 55+ free AI models through OpenRouter API.
+A learning project exploring web development with AI models - built as a foundation for more advanced AI agent experiments.
+
+## 🎯 Purpose
+
+This chat interface was created as an exploration of building web applications with Claude Code, OpenRouter API, and Flask. It serves as a stepping stone toward more sophisticated AI agent projects, including multi-agent conversations and population-scale simulations.
+
+**Note**: This is not intended as a production-grade chat assistant, but rather as a learning exercise and foundation for future Monster Lab projects.
 
 ## ✨ Features
 
@@ -12,11 +18,14 @@ A sleek, modern web interface for chatting with 55+ free AI models through OpenR
 - **Chat History**: Maintains conversation context
 - **Mobile Friendly**: Responsive design for all devices
 
-## 🚀 Quick Start
+## 🚀 Live Demo
+
+**Production**: https://monster-chat.up.railway.app
+
+## 🛠️ Local Development
 
 1. **Install Dependencies**:
    ```bash
-   cd chat_ui
    python -m venv chat_env
    source chat_env/bin/activate  # On Windows: chat_env\Scripts\activate
    pip install -r requirements.txt
@@ -28,7 +37,7 @@ A sleek, modern web interface for chatting with 55+ free AI models through OpenR
    ```
 
 3. **Open Your Browser**:
-   - Go to the URL shown in the terminal (e.g., `http://localhost:58567`)
+   - Go to the URL shown in the terminal
    - Select a free model from the dropdown
    - Start chatting!
 
@@ -44,6 +53,15 @@ chat_ui/
 ├── requirements.txt # Python dependencies
 └── README.md       # This file
 ```
+
+## 🧠 Learning Objectives
+
+This project explores:
+- **Web Development**: Building responsive interfaces with HTML/CSS/JS
+- **API Integration**: Connecting to OpenRouter's model ecosystem  
+- **Flask Backend**: Creating RESTful APIs and real-time streaming
+- **Deployment**: Using Railway for cloud hosting
+- **Development Workflow**: Git, GitHub, and modern dev practices
 
 ## 🛠️ How It Works
 
@@ -76,4 +94,15 @@ openrouter_api_key=sk-or-v1-your-key-here
 - Clear chat to start fresh conversations
 - Check token usage to monitor API calls
 
-Enjoy chatting with AI! 🤖✨
+## 🔮 What's Next
+
+This foundation enables more advanced Monster Lab projects:
+- **Group Chat**: Multi-agent conversations and interactions
+- **AgentTorch Integration**: Population-scale agent-based modeling
+- **Advanced AI Behaviors**: Exploring emergent patterns and collaboration
+
+Built with Claude Code as a learning exercise - not intended for production use.
+
+---
+
+*Part of the Monster Lab project - exploring AI agents and their behaviors* 🤖✨
