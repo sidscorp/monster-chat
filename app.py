@@ -33,8 +33,82 @@ def load_api_key():
     
     raise ValueError("openrouter_api_key not found in api_keys.env")
 
-def get_free_models():
-    """Get list of free models from OpenRouter"""
+def generate_model_categories(model):
+    """Generate categories/tags for a model based on its metadata"""
+    categories = []
+    
+    # Get model info
+    name = model.get('name', '').lower()
+    description = model.get('description', '').lower()
+    model_id = model.get('id', '').lower()
+    architecture = model.get('architecture', {})
+    capabilities = model.get('capabilities', {})
+    
+    # Modality-based categories
+    input_modalities = architecture.get('input_modalities', [])
+    if 'image' in input_modalities:
+        categories.append('vision')
+    if 'text' in input_modalities and 'image' in input_modalities:
+        categories.append('multimodal')
+    
+    # Capability-based categories
+    supported_params = capabilities.get('supported_parameters', [])
+    if 'tools' in supported_params:
+        categories.append('tools')
+    if 'reasoning' in supported_params:
+        categories.append('reasoning')
+        
+    # Content analysis from name and description
+    content_keywords = {
+        'code': ['code', 'programming', 'developer', 'coding', 'github', 'python', 'javascript'],
+        'math': ['math', 'mathematical', 'calculation', 'solver', 'theorem'],
+        'reasoning': ['reasoning', 'logic', 'analysis', 'think', 'step-by-step'],
+        'creative': ['creative', 'writing', 'story', 'literature', 'poetry', 'novel'],
+        'roleplay': ['roleplay', 'character', 'persona', 'chat', 'assistant'],
+        'uncensored': ['uncensored', 'nsfw', 'unfiltered', 'unconstrained'],
+        'fast': ['fast', 'speed', 'quick', 'nano', 'turbo', 'instant'],
+        'large': ['large', 'big', 'giant', 'huge', 'massive'],
+        'small': ['small', 'mini', 'tiny', 'lite', 'compact']
+    }
+    
+    combined_text = f"{name} {description} {model_id}"
+    
+    for category, keywords in content_keywords.items():
+        if any(keyword in combined_text for keyword in keywords):
+            categories.append(category)
+    
+    # Provider-specific categories
+    provider = model.get('id', '').split('/')[0]
+    provider_specialties = {
+        'anthropic': ['reasoning', 'helpful'],
+        'openai': ['general', 'popular'],
+        'meta-llama': ['open-source'],
+        'google': ['research', 'advanced'],
+        'mistralai': ['efficient'],
+        'deepseek': ['reasoning', 'code'],
+        'qwen': ['multilingual'],
+        'microsoft': ['enterprise'],
+        'cohere': ['search', 'embeddings']
+    }
+    
+    if provider in provider_specialties:
+        categories.extend(provider_specialties[provider])
+    
+    # Context length categories
+    context_length = model.get('context_length', 0)
+    if isinstance(context_length, int):
+        if context_length >= 128000:
+            categories.append('long-context')
+        elif context_length >= 32000:
+            categories.append('medium-context')
+        elif context_length <= 8192:
+            categories.append('short-context')
+    
+    # Remove duplicates and return
+    return list(set(categories))
+
+def get_models(filter_type='all'):
+    """Get list of models from OpenRouter with optional filtering"""
     try:
         api_key = load_api_key()
         
@@ -51,60 +125,79 @@ def get_free_models():
             data = response.json()
             models = data.get('data', [])
             
-            # Filter for free models and include rich metadata
-            free_models = []
+            # Filter models based on filter_type and include rich metadata
+            filtered_models = []
             for model in models:
                 pricing = model.get('pricing', {})
                 prompt_price = pricing.get('prompt', '0')
                 
-                # Check if model is free
-                if prompt_price == '0' or ':free' in model.get('id', ''):
-                    # Extract architecture info
-                    architecture = model.get('architecture', {})
-                    
-                    # Extract provider info
-                    top_provider = model.get('top_provider', {})
-                    
-                    # Parse model ID for provider
-                    model_id = model.get('id', '')
-                    provider = model_id.split('/')[0] if '/' in model_id else 'unknown'
-                    
-                    # Format creation date
-                    created_timestamp = model.get('created', 0)
-                    import datetime
-                    try:
-                        created_date = datetime.datetime.fromtimestamp(created_timestamp).strftime('%Y-%m-%d') if created_timestamp else 'Unknown'
-                    except:
-                        created_date = 'Unknown'
-                    
-                    free_models.append({
-                        'id': model.get('id'),
-                        'name': model.get('name', 'Unknown'),
-                        'description': model.get('description', ''),
-                        'context_length': model.get('context_length', 'Unknown'),
-                        'provider': provider,
-                        'created_date': created_date,
-                        'hugging_face_id': model.get('hugging_face_id', ''),
-                        'canonical_slug': model.get('canonical_slug', ''),
-                        'architecture': {
-                            'modality': architecture.get('modality', 'Unknown'),
-                            'input_modalities': architecture.get('input_modalities', []),
-                            'output_modalities': architecture.get('output_modalities', []),
-                            'tokenizer': architecture.get('tokenizer', 'Unknown'),
-                            'instruct_type': architecture.get('instruct_type', None)
-                        },
-                        'capabilities': {
-                            'max_completion_tokens': top_provider.get('max_completion_tokens', 'Unknown'),
-                            'is_moderated': top_provider.get('is_moderated', False),
-                            'supported_parameters': model.get('supported_parameters', [])
-                        },
-                        'safety_info': {
-                            'is_moderated': top_provider.get('is_moderated', False),
-                            'per_request_limits': model.get('per_request_limits', None)
-                        }
-                    })
+                # Apply filtering based on filter_type
+                is_free = prompt_price == '0' or ':free' in model.get('id', '')
+                
+                if filter_type == 'free' and not is_free:
+                    continue
+                elif filter_type == 'paid' and is_free:
+                    continue
+                # filter_type == 'all' includes everything
+                
+                # Extract architecture info
+                architecture = model.get('architecture', {})
+                
+                # Extract provider info
+                top_provider = model.get('top_provider', {})
+                
+                # Parse model ID for provider
+                model_id = model.get('id', '')
+                provider = model_id.split('/')[0] if '/' in model_id else 'unknown'
+                
+                # Format creation date
+                created_timestamp = model.get('created', 0)
+                import datetime
+                try:
+                    created_date = datetime.datetime.fromtimestamp(created_timestamp).strftime('%Y-%m-%d') if created_timestamp else 'Unknown'
+                except:
+                    created_date = 'Unknown'
+                
+                # Add pricing info
+                price_info = {
+                    'is_free': is_free,
+                    'prompt_price': prompt_price,
+                    'completion_price': pricing.get('completion', '0')
+                }
+                
+                # Generate categories/tags
+                categories = generate_model_categories(model)
+                
+                filtered_models.append({
+                    'id': model.get('id'),
+                    'name': model.get('name', 'Unknown'),
+                    'description': model.get('description', ''),
+                    'context_length': model.get('context_length', 'Unknown'),
+                    'provider': provider,
+                    'created_date': created_date,
+                    'hugging_face_id': model.get('hugging_face_id', ''),
+                    'canonical_slug': model.get('canonical_slug', ''),
+                    'pricing': price_info,
+                    'categories': categories,
+                    'architecture': {
+                        'modality': architecture.get('modality', 'Unknown'),
+                        'input_modalities': architecture.get('input_modalities', []),
+                        'output_modalities': architecture.get('output_modalities', []),
+                        'tokenizer': architecture.get('tokenizer', 'Unknown'),
+                        'instruct_type': architecture.get('instruct_type', None)
+                    },
+                    'capabilities': {
+                        'max_completion_tokens': top_provider.get('max_completion_tokens', 'Unknown'),
+                        'is_moderated': top_provider.get('is_moderated', False),
+                        'supported_parameters': model.get('supported_parameters', [])
+                    },
+                    'safety_info': {
+                        'is_moderated': top_provider.get('is_moderated', False),
+                        'per_request_limits': model.get('per_request_limits', None)
+                    }
+                })
             
-            return free_models
+            return filtered_models
         else:
             raise Exception(f"API returned status {response.status_code}")
             
@@ -295,14 +388,87 @@ def serve_static(filename):
     return send_from_directory('.', filename)
 
 @app.route('/api/models', methods=['GET'])
-def get_models():
-    """API endpoint to get available free models"""
+def get_models_endpoint():
+    """API endpoint to get available models with optional filtering"""
     try:
-        models = get_free_models()
+        price_filter = request.args.get('price', 'all')  # 'all', 'free', or 'paid'
+        category_filter = request.args.get('category', 'all')  # category name or 'all'
+        
+        models = get_models('all')  # Get all models first
+        
+        # Apply price filtering
+        if price_filter == 'free':
+            models = [m for m in models if m['pricing']['is_free']]
+        elif price_filter == 'paid':
+            models = [m for m in models if not m['pricing']['is_free']]
+        
+        # Apply category filtering
+        if category_filter != 'all':
+            models = [m for m in models if category_filter in m.get('categories', [])]
+        
         return jsonify({
             'success': True,
             'models': models,
-            'count': len(models)
+            'count': len(models),
+            'price_filter': price_filter,
+            'category_filter': category_filter
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/categories', methods=['GET'])
+def get_categories():
+    """API endpoint to get all available categories"""
+    try:
+        models = get_models('all')
+        all_categories = set()
+        
+        for model in models:
+            all_categories.update(model.get('categories', []))
+        
+        # Sort categories and create display names
+        category_list = []
+        category_display_names = {
+            'vision': '👁️ Vision',
+            'multimodal': '🔄 Multimodal',
+            'tools': '🛠️ Tools',
+            'reasoning': '🧠 Reasoning',
+            'code': '💻 Code',
+            'math': '🔢 Math',
+            'creative': '🎨 Creative',
+            'roleplay': '🎭 Roleplay',
+            'uncensored': '🔓 Uncensored',
+            'fast': '⚡ Fast',
+            'large': '📏 Large',
+            'small': '📦 Small',
+            'long-context': '📜 Long Context',
+            'medium-context': '📄 Medium Context',
+            'short-context': '📝 Short Context',
+            'open-source': '🌍 Open Source',
+            'general': '🌐 General',
+            'popular': '⭐ Popular',
+            'research': '🔬 Research',
+            'advanced': '🚀 Advanced',
+            'efficient': '⚙️ Efficient',
+            'multilingual': '🌎 Multilingual',
+            'enterprise': '🏢 Enterprise',
+            'helpful': '🤝 Helpful',
+            'search': '🔍 Search',
+            'embeddings': '🔗 Embeddings'
+        }
+        
+        for category in sorted(all_categories):
+            category_list.append({
+                'value': category,
+                'label': category_display_names.get(category, category.title())
+            })
+        
+        return jsonify({
+            'success': True,
+            'categories': category_list
         })
     except Exception as e:
         return jsonify({

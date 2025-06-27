@@ -25,7 +25,7 @@ body {
 
 .chat-container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1600px;
     height: 90vh;
     background: white;
     border-radius: 20px;
@@ -71,6 +71,57 @@ body {
     z-index: 1;
 }
 
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 4px;
+    backdrop-filter: blur(10px);
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.tab-btn.active {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Model Controls Section */
+.model-controls-section {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 15px 20px 5px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+}
+
 .chat-header h1 {
     font-size: 1.5rem;
     font-weight: 600;
@@ -79,30 +130,41 @@ body {
     gap: 10px;
 }
 
-.model-selector {
+.model-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.model-filter, .model-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     background: rgba(255, 255, 255, 0.1);
     padding: 8px 15px;
     border-radius: 10px;
     backdrop-filter: blur(10px);
 }
 
-.model-selector label {
+.model-filter label, .model-selector label {
     font-weight: 500;
     font-size: 0.9rem;
+    white-space: nowrap;
 }
 
-#model-select {
+#price-filter, #category-filter, #model-select {
     background: rgba(255, 255, 255, 0.9);
     border: none;
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 0.9rem;
     color: #333;
-    min-width: 250px;
+    min-width: 200px;
     cursor: pointer;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
 }
 
 .clear-btn {
@@ -122,6 +184,85 @@ body {
 .clear-btn:hover {
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-1px);
+}
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tab-panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tab-panel.active {
+    display: flex;
+}
+
+/* Evaluation Tab */
+.evaluation-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    padding: 40px;
+}
+
+.evaluation-placeholder {
+    text-align: center;
+    max-width: 600px;
+    background: white;
+    padding: 60px 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.placeholder-icon {
+    font-size: 4rem;
+    color: #4f46e5;
+    margin-bottom: 20px;
+}
+
+.evaluation-placeholder h2 {
+    color: #1e293b;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+}
+
+.evaluation-placeholder p {
+    color: #64748b;
+    margin-bottom: 40px;
+    font-size: 1.1rem;
+}
+
+.placeholder-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 10px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.feature-item i {
+    color: #4f46e5;
+    font-size: 1.2rem;
 }
 
 /* Chat Messages */
@@ -692,6 +833,27 @@ body {
     color: #ef4444;
 }
 
+/* Pricing Badges */
+.free-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white !important;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.paid-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white !important;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 /* Loading Overlay */
 .loading-overlay {
     position: fixed;
@@ -769,13 +931,30 @@ body {
         font-size: 1.3rem;
         text-align: center;
     }
-    
-    .model-selector {
+
+    .tab-navigation {
+        order: 2;
+        justify-content: center;
+    }
+
+    .header-controls {
+        order: 3;
         justify-content: center;
     }
     
-    #model-select {
+    .model-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .model-filter, .model-selector {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    #price-filter, #category-filter, #model-select {
         min-width: 200px;
+        flex: 1;
     }
     
     .message-content {

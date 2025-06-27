@@ -16,47 +16,117 @@
         <header class="chat-header">
             <div class="header-content">
                 <h1><i class="fas fa-dragon"></i> Mini Monsters Lab</h1>
-                <div class="model-selector">
-                    <label for="model-select">🧬 Select Creature:</label>
-                    <select id="model-select">
-                        <option value="">Awakening creatures...</option>
-                    </select>
+                
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="chat">
+                        <i class="fas fa-comments"></i> Chat
+                    </button>
+                    <button class="tab-btn" data-tab="evaluation">
+                        <i class="fas fa-chart-line"></i> Evaluation
+                    </button>
                 </div>
-                <button id="clear-chat" class="clear-btn">
-                    <i class="fas fa-broom"></i> Reset Lab
-                </button>
+                
+                <div class="header-controls">
+                    <button id="clear-chat" class="clear-btn">
+                        <i class="fas fa-broom"></i> Reset Lab
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Model Controls (only visible in chat tab) -->
+            <div class="model-controls-section" id="model-controls-section">
+                <div class="model-controls">
+                    <div class="model-filter">
+                        <label for="price-filter">💰 Pricing:</label>
+                        <select id="price-filter">
+                            <option value="all">All Prices</option>
+                            <option value="free">Free Only</option>
+                            <option value="paid">Paid Only</option>
+                        </select>
+                    </div>
+                    <div class="model-filter">
+                        <label for="category-filter">🏷️ Category:</label>
+                        <select id="category-filter">
+                            <option value="all">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="model-selector">
+                        <label for="model-select">🧬 Select Creature:</label>
+                        <select id="model-select">
+                            <option value="">Awakening creatures...</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Chat Messages -->
-        <div class="chat-messages" id="chat-messages">
-            <div class="welcome-message">
-                <div class="welcome-icon">
-                    <i class="fas fa-flask"></i>
+        <!-- Tab Content Areas -->
+        <div class="tab-content">
+            <!-- Chat Tab -->
+            <div class="tab-panel active" id="chat-tab">
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chat-messages">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <h2>🧪 Welcome to the Mini Monsters Lab!</h2>
+                        <p>Select a creature from the genetic library and begin your experiment!</p>
+                        <div class="model-info" id="model-info">
+                            <p>🧬 Choose from hundreds of AI creatures with unique personalities and abilities. Each creature has different traits, intelligence levels, and behaviors. Start creating your own mini monster interactions!</p>
+                        </div>
+                    </div>
                 </div>
-                <h2>🧪 Welcome to the Mini Monsters Lab!</h2>
-                <p>Select a creature from the genetic library and begin your experiment!</p>
-                <div class="model-info" id="model-info">
-                    <p>🧬 Choose from 55+ AI creatures with unique personalities and abilities. Each creature has different traits, intelligence levels, and behaviors. Start creating your own mini monster interactions!</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Input Area -->
-        <div class="chat-input-container">
-            <div class="chat-input-wrapper">
-                <textarea 
-                    id="chat-input" 
-                    placeholder="Talk to your mini monster... What would you like to discover? 🎭"
-                    rows="1"
-                ></textarea>
-                <button id="send-btn" class="send-btn" disabled>
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+                <!-- Input Area -->
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea 
+                            id="chat-input" 
+                            placeholder="Talk to your mini monster... What would you like to discover? 🎭"
+                            rows="1"
+                        ></textarea>
+                        <button id="send-btn" class="send-btn" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="input-info">
+                        <span class="token-count" id="token-count">0 tokens</span>
+                        <span class="status" id="status">Ready</span>
+                    </div>
+                </div>
             </div>
-            <div class="input-info">
-                <span class="token-count" id="token-count">0 tokens</span>
-                <span class="status" id="status">Ready</span>
+
+            <!-- Evaluation Tab -->
+            <div class="tab-panel" id="evaluation-tab">
+                <div class="evaluation-content">
+                    <div class="evaluation-placeholder">
+                        <div class="placeholder-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h2>🔬 LLM Evaluation Center</h2>
+                        <p>Advanced evaluation tools coming soon...</p>
+                        <div class="placeholder-features">
+                            <div class="feature-item">
+                                <i class="fas fa-tasks"></i>
+                                <span>Model Comparison</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-stopwatch"></i>
+                                <span>Performance Benchmarks</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-brain"></i>
+                                <span>Reasoning Tests</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-code"></i>
+                                <span>Code Quality Assessment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

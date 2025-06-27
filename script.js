@@ -3,13 +3,18 @@ class ChatApp {
         this.messages = [];
         this.currentModel = '';
         this.isTyping = false;
-        this.freeModels = [];
+        this.allModels = [];
+        this.categories = [];
+        this.currentPriceFilter = 'all';
+        this.currentCategoryFilter = 'all';
         this.useStreaming = true;
         this.currentStreamingMessage = null;
+        this.activeTab = 'chat';
         
         this.initializeElements();
         this.attachEventListeners();
-        this.loadFreeModels();
+        this.initializeUI();
+        this.loadModels();
     }
 
     initializeElements() {
@@ -22,6 +27,24 @@ class ChatApp {
         this.status = document.getElementById('status');
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.modelInfo = document.getElementById('model-info');
+        this.priceFilter = document.getElementById('price-filter');
+        this.categoryFilter = document.getElementById('category-filter');
+        this.modelControlsSection = document.getElementById('model-controls-section');
+        this.tabButtons = document.querySelectorAll('.tab-btn');
+        this.tabPanels = document.querySelectorAll('.tab-panel');
+        
+        // Debug logging
+        console.log('Price filter element:', this.priceFilter);
+        console.log('Category filter element:', this.categoryFilter);
+        console.log('Model controls section:', this.modelControlsSection);
+        
+        // Test if elements are clickable
+        if (this.priceFilter) {
+            this.priceFilter.onclick = () => console.log('Price filter clicked!');
+        }
+        if (this.categoryFilter) {
+            this.categoryFilter.onclick = () => console.log('Category filter clicked!');
+        }
     }
 
     attachEventListeners() {
@@ -56,21 +79,99 @@ class ChatApp {
 
         // Clear chat
         this.clearBtn.addEventListener('click', () => this.clearChat());
+
+        // Price filter
+        if (this.priceFilter) {
+            this.priceFilter.addEventListener('change', () => {
+                this.currentPriceFilter = this.priceFilter.value;
+                this.populateModelSelect();
+            });
+        }
+
+        // Category filter
+        if (this.categoryFilter) {
+            this.categoryFilter.addEventListener('change', () => {
+                this.currentCategoryFilter = this.categoryFilter.value;
+                this.populateModelSelect();
+            });
+        }
+
+        // Tab switching
+        if (this.tabButtons) {
+            this.tabButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tabName = e.target.closest('.tab-btn').dataset.tab;
+                    this.switchTab(tabName);
+                });
+            });
+        }
     }
 
-    async loadFreeModels() {
+    initializeUI() {
+        // Ensure we start on the chat tab with model controls visible
+        if (this.modelControlsSection) {
+            this.modelControlsSection.style.display = 'block';
+        }
+        
+        // Set active tab button
+        if (this.tabButtons) {
+            this.tabButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === 'chat');
+            });
+        }
+        
+        // Set active tab panel
+        if (this.tabPanels) {
+            this.tabPanels.forEach(panel => {
+                panel.classList.toggle('active', panel.id === 'chat-tab');
+            });
+        }
+    }
+
+    switchTab(tabName) {
+        // Update active tab button
+        this.tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        // Update active tab panel
+        this.tabPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.id === `${tabName}-tab`);
+        });
+
+        // Show/hide model controls based on tab
+        if (this.modelControlsSection) {
+            if (tabName === 'chat') {
+                this.modelControlsSection.style.display = 'block';
+            } else {
+                this.modelControlsSection.style.display = 'none';
+            }
+        }
+
+        this.activeTab = tabName;
+    }
+
+    async loadModels() {
         try {
             this.updateStatus('🧬 Awakening creatures...', 'thinking');
             
-            const response = await fetch('/api/models');
-            const data = await response.json();
+            // Load models and categories in parallel
+            const [modelsResponse, categoriesResponse] = await Promise.all([
+                fetch('/api/models?price=all&category=all'),
+                fetch('/api/categories')
+            ]);
             
-            if (data.success) {
-                this.freeModels = data.models;
+            const modelsData = await modelsResponse.json();
+            const categoriesData = await categoriesResponse.json();
+            
+            if (modelsData.success && categoriesData.success) {
+                this.allModels = modelsData.models;
+                this.categories = categoriesData.categories;
+                this.populateCategoryFilter();
                 this.populateModelSelect();
-                this.updateStatus('🎉 Lab ready for experiments!', 'ready');
+                this.updateStatus(`🎉 Lab ready! ${modelsData.count} creatures awakened!`, 'ready');
             } else {
-                throw new Error(data.error || 'Failed to awaken creatures');
+                throw new Error(modelsData.error || categoriesData.error || 'Failed to awaken creatures');
             }
         } catch (error) {
             console.error('Error loading models:', error);
@@ -79,11 +180,37 @@ class ChatApp {
         }
     }
 
+    populateCategoryFilter() {
+        this.categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+        
+        this.categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.value;
+            option.textContent = category.label;
+            this.categoryFilter.appendChild(option);
+        });
+    }
+
     populateModelSelect() {
         this.modelSelect.innerHTML = '<option value="">🔬 Choose your creature...</option>';
         
+        // Filter models based on current filters
+        const filteredModels = this.allModels.filter(model => {
+            // Price filter
+            if (this.currentPriceFilter === 'free' && !model.pricing?.is_free) return false;
+            if (this.currentPriceFilter === 'paid' && model.pricing?.is_free) return false;
+            
+            // Category filter
+            if (this.currentCategoryFilter !== 'all') {
+                const categories = model.categories || [];
+                if (!categories.includes(this.currentCategoryFilter)) return false;
+            }
+            
+            return true;
+        });
+        
         // Group models by provider
-        const groupedModels = this.groupModelsByProvider(this.freeModels);
+        const groupedModels = this.groupModelsByProvider(filteredModels);
         
         Object.keys(groupedModels).forEach(provider => {
             const optgroup = document.createElement('optgroup');
@@ -92,7 +219,8 @@ class ChatApp {
             groupedModels[provider].forEach(model => {
                 const option = document.createElement('option');
                 option.value = model.id;
-                option.textContent = model.name;
+                const priceLabel = model.pricing?.is_free ? ' (Free)' : ' (Paid)';
+                option.textContent = model.name + priceLabel;
                 optgroup.appendChild(option);
             });
             
@@ -149,12 +277,12 @@ class ChatApp {
 
     updateModelInfo() {
         if (this.currentModel) {
-            const selectedModel = this.freeModels.find(m => m.id === this.currentModel);
+            const selectedModel = this.allModels.find(m => m.id === this.currentModel);
             if (selectedModel) {
                 this.modelInfo.innerHTML = this.generateModelInfoCard(selectedModel);
             }
         } else {
-            this.modelInfo.innerHTML = '<p>🧬 Choose from 55+ AI creatures with unique personalities and abilities. Each creature has different traits, intelligence levels, and behaviors. Start creating your own mini monster interactions!</p>';
+            this.modelInfo.innerHTML = '<p>🧬 Choose from hundreds of AI creatures with unique personalities and abilities. Each creature has different traits, intelligence levels, and behaviors. Start creating your own mini monster interactions!</p>';
         }
     }
 
@@ -187,6 +315,12 @@ class ChatApp {
                     <div class="stat">
                         <span class="stat-label">🧬 Species:</span>
                         <span class="stat-value">${model.name}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">💰 Cost:</span>
+                        <span class="stat-value ${model.pricing?.is_free ? 'free-badge' : 'paid-badge'}">
+                            ${model.pricing?.is_free ? '🆓 Free' : '💳 Paid'}
+                        </span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">📅 Created:</span>
